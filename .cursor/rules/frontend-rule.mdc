@@ -11,3 +11,16 @@ alwaysApply: false
 - You should use Next.js as it works best with Vercel. 
 - This frontend will ultimately be deployed on Vercel, but it should be possible to test locally. 
 - Always provide users with a way to run the created UI once you have created it.
+
+### Glassy UI Design Guidelines
+
+- **Translucent Materials**: Use semi-transparent backgrounds (backdrop-filter: blur) with subtle opacity (0.6-0.85) to create glass-like surfaces.
+- **Dynamic Light Refraction**: Implement subtle gradients and shadows that respond to mouse movement to simulate light refraction through glass.
+- **Rounded Edges**: All UI components should have rounded corners (border-radius: 12-24px) to create a soft, bubble-like appearance.
+- **Layered Depth**: Create a sense of depth by stacking translucent elements with subtle spacing and drop shadows.
+- **Morphing Animations**: Components should transition smoothly with fluid animations when interacted with or when states change.
+- **Adaptive Responsiveness**: Interface elements should adapt their size, shape, and position based on content and viewport size.
+- **Frosted Glass Effect**: Apply backdrop-filter: blur(10-15px) combined with a subtle background-color: rgba() for the iconic frosted glass look.
+- **Subtle Borders**: Use thin, light borders (1px) with low opacity white/light colors to define the edges of glass components.
+- **Dynamic Reflections**: For premium experiences, consider adding subtle reflection effects that change based on scroll position or mouse movement.
+- **Ambient Light Adaptation**: UI should subtly respond to system dark/light mode, adapting its transparency and colors accordingly.
