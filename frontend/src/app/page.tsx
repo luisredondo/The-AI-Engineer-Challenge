@@ -38,7 +38,7 @@ export default function ChatPage() {
   const [isCharging, setIsCharging] = useState(false);
   const [chargeLevel, setChargeLevel] = useState(0);
   const [rockets, setRockets] = useState<{id: number, x: number, y: number, delay: number, emoji: string}[]>([]);
-  const [matrixRain, setMatrixRain] = useState<{id: number, x: number, delay: number, text: string}[]>([]);
+  const [matrixRain, setMatrixRain] = useState<{id: number, x: number, delay: number, text: string, speed?: number, size?: string, opacity?: number}[]>([]);
   // Empty view and hero animation states
   const [isEmptyView, setIsEmptyView] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -176,23 +176,31 @@ export default function ChatPage() {
             setRockets(prev => [...prev.slice(-15), newRocket]); // Keep max 16 rockets
           }
           
-          // Add Matrix rain at higher charge levels
-          if (newLevel > 30 && newLevel % 3 === 0) {
-            const matrixChars = ['0', '1', 'A', 'B', 'C', 'X', 'Y', 'Z', '{', '}', '<', '>', '(', ')', '[', ']', '=', '+', '-', '*', '/', '%', '&', '$', '#', '@'];
-            const newMatrix = {
-              id: Date.now() + Math.random(),
-              x: Math.random() * 100, // 0vw to 100vw
-              delay: Math.random() * 500,
-              text: Array.from({length: 3 + Math.floor(Math.random() * 4)}, () => 
-                matrixChars[Math.floor(Math.random() * matrixChars.length)]
-              ).join('')
-            };
-            setMatrixRain(prev => [...prev.slice(-8), newMatrix]); // Keep max 9 matrix strings
+          // Add Matrix rain - moderate intensity
+          if (newLevel > 5 && newLevel % 3 === 0) {
+            const matrixChars = ['0', '1', 'A', 'B', 'C', 'X', 'Y', 'Z', '@', '#', '$', '%', '&', '*'];
+            const intensity = Math.floor(newLevel / 15) + 2; // Start with 2, increase gradually
+            
+            for (let i = 0; i < intensity; i++) {
+              const newMatrix = {
+                id: Date.now() + Math.random() * 1000 + i,
+                x: Math.random() * 100,
+                delay: i * 100, // Staggered delays
+                text: Array.from({length: 6 + Math.floor(Math.random() * 4)}, () => 
+                  matrixChars[Math.floor(Math.random() * matrixChars.length)]
+                ).join(''),
+                speed: 4,
+                size: 'text-xl',
+                opacity: 1
+              };
+              
+              setMatrixRain(prev => [...prev.slice(-25), newMatrix]); // Keep reasonable amount
+            }
           }
           
           return newLevel;
         });
-      }, 50);
+      }, 30);
     }
     
     return () => {
@@ -285,10 +293,10 @@ export default function ChatPage() {
       setHeroAnimating(true);
       setIsEmptyView(false);
       setShowSuggestions(false);
+      setBubblesVisible(0); // Reset bubbles immediately
       
-      // Delay the actual message sending to allow hero animation
+      // End hero animation after transition
       setTimeout(() => {
-        setBubblesVisible(0); // No initial welcome message
         setHeroAnimating(false);
       }, 600);
     }
@@ -476,10 +484,10 @@ export default function ChatPage() {
       setHeroAnimating(true);
       setIsEmptyView(false);
       setShowSuggestions(false);
+      setBubblesVisible(0); // Reset bubbles immediately
       
-      // Delay the actual message sending to allow hero animation
+      // End hero animation after transition
       setTimeout(() => {
-        setBubblesVisible(0); // No initial welcome message
         setHeroAnimating(false);
       }, 600);
     }
@@ -535,7 +543,7 @@ export default function ChatPage() {
       
       try {
         // OpenAI API key
-        const API_KEY = "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";
+        const API_KEY = "";
         
         // Real OpenAI API call with streaming
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -718,7 +726,7 @@ export default function ChatPage() {
       >
         <div className="flex flex-col h-full p-5">
           <div className="flex justify-between items-center mb-6">
-            <div className="font-bold text-lg text-gray-800 dark:text-gray-100 select-none tracking-tight">Conversations</div>
+            <div className="font-bold text-lg text-white select-none tracking-tight">Conversations</div>
             <div className="flex items-center space-x-1">
               {/* New conversation button - doesn't close sidebar */}
               <button 
@@ -861,17 +869,20 @@ export default function ChatPage() {
           {matrixRain.map(matrix => (
             <div
               key={matrix.id}
-              className="fixed pointer-events-none text-green-400 font-mono text-sm z-0"
+              className="fixed pointer-events-none text-green-400 font-mono text-xl font-bold z-30"
               style={{
                 left: `${matrix.x}vw`,
-                top: '0vh',
-                animation: `matrixFall 3s linear forwards`,
+                top: '-10vh',
+                animation: `matrixFall 4s linear forwards`,
                 animationDelay: `${matrix.delay}ms`,
-                textShadow: '0 0 10px rgba(34, 197, 94, 0.8)',
-                opacity: 0.8
+                textShadow: '0 0 20px rgba(34, 197, 94, 1), 0 0 40px rgba(34, 197, 94, 0.8)',
+                opacity: 1,
+                lineHeight: '1.2'
               }}
             >
-              {matrix.text}
+              <div style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }}>
+                {matrix.text}
+              </div>
             </div>
           ))}
           
@@ -930,10 +941,10 @@ export default function ChatPage() {
               {messages.slice(0, bubblesVisible).map((msg, i) => (
               <div
                 key={msg.id}
-                className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"} chat-bubble-animate`}
+                className={`flex w-full ${msg.sender === "user" ? "justify-end" : "justify-start"} ${heroAnimating ? '' : 'chat-bubble-animate'}`}
                 style={{
-                  animationDelay: `${i * 80}ms`,
-                  opacity: 1,
+                  animationDelay: heroAnimating ? '0ms' : `${i * 80}ms`,
+                  opacity: heroAnimating ? 0 : 1,
                 }}
               >
                 <div
@@ -1064,7 +1075,7 @@ export default function ChatPage() {
           >
             <div className="w-full max-w-xl mx-auto">
               <form
-                className={`flex gap-2 items-center bg-white/70 dark:bg-gray-900/70 border border-white/30 dark:border-white/10 shadow-2xl rounded-2xl px-4 py-3 w-full glassy-inputbar transition-all duration-500 ${
+                className={`flex gap-2 items-center bg-white/20 dark:bg-gray-900/20 border border-white/30 dark:border-white/10 shadow-2xl rounded-2xl px-4 py-3 w-full glassy-inputbar transition-all duration-500 ${
                   heroAnimating ? 'animate-hero-to-bottom' : (!isEmptyView ? '' : 'animate-input-slide-up')
                 }`}
                 style={{
@@ -1079,7 +1090,7 @@ export default function ChatPage() {
             <input
               type="text"
               ref={inputRef}
-              className="flex-1 bg-transparent outline-none border-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-base"
+              className="flex-1 bg-transparent outline-none border-none text-white placeholder-gray-300 text-base"
               placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -1089,7 +1100,7 @@ export default function ChatPage() {
             />
             <button
               type="submit"
-              className="px-5 py-2 rounded-2xl bg-blue-500/80 hover:bg-blue-600/90 active:bg-blue-700/90 text-white font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:opacity-60 disabled:cursor-not-allowed glassy-send"
+              className="px-5 py-2 rounded-2xl hover:bg-white/10 active:bg-white/20 text-white font-semibold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/40 disabled:opacity-60 disabled:cursor-not-allowed glassy-send"
               disabled={isSending || !input.trim() || !inputVisible}
               aria-label="Send message"
               style={{
@@ -1113,9 +1124,9 @@ export default function ChatPage() {
       </div>
       <style jsx global>{`
         .radiant-bg {
-          background: linear-gradient(120deg, #181c2b 0%, #232a4d 40%, #3a2e5a 70%, #1a3a4d 100%, #2b1a3a 120%);
+          background: linear-gradient(120deg, rgba(24,28,43,0.6) 0%, rgba(35,42,77,0.6) 40%, rgba(58,46,90,0.6) 70%, rgba(26,58,77,0.6) 100%, rgba(43,26,58,0.6) 120%);
           /* fallback for old browsers */
-          background-color: #181c2b;
+          background-color: rgba(24,28,43,0.6);
           /* animated overlay for vibrancy */
           position: relative;
           background-size: 200% 200%;
@@ -1216,8 +1227,8 @@ export default function ChatPage() {
           box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13), 0 1.5px 8px 0 rgba(120,120,255,0.10);
         }
         .glassy-send {
-          background: linear-gradient(135deg, rgba(120,180,255,0.45) 0%, rgba(80,120,255,0.25) 100%);
-          border: 1.5px solid rgba(120,180,255,0.18);
+          background: linear-gradient(135deg, rgba(120,180,255,0.8) 0%, rgba(80,120,255,0.7) 100%);
+          border: 1.5px solid rgba(120,180,255,0.6);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
         }
@@ -1354,6 +1365,62 @@ export default function ChatPage() {
           100% {
             opacity: 1;
             transform: translateY(0) scale(1);
+          }
+        }
+        
+        /* Matrix rain animation */
+        @keyframes matrixFall {
+          0% {
+            transform: translateY(-20vh);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(120vh);
+            opacity: 0;
+          }
+        }
+        
+        /* Chaotic matrix glitch effect */
+        @keyframes matrixGlitch {
+          0%, 100% { 
+            transform: translateX(0) skewX(0deg);
+          }
+          20% { 
+            transform: translateX(-2px) skewX(2deg);
+          }
+          40% { 
+            transform: translateX(2px) skewX(-2deg);
+          }
+          60% { 
+            transform: translateX(-1px) skewX(1deg);
+          }
+          80% { 
+            transform: translateX(1px) skewX(-1deg);
+          }
+        }
+        
+        /* Rocket fireworks animation */
+        @keyframes rocketFirework {
+          0% {
+            transform: translateY(0) scale(0.5);
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+          }
+          80% {
+            transform: translateY(-50vh) scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-60vh) scale(0.8);
+            opacity: 0;
           }
         }
         
