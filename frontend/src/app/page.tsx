@@ -341,7 +341,7 @@ export default function ChatPage() {
       let streamedText = "";
       try {
         // OpenAI API key
-        const API_KEY = "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";
+        const API_KEY = "";
         
         // Real OpenAI API call with streaming
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
